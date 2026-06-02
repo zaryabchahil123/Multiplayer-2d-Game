@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><base href="https://d16ilfvy4mv02r.cloudfront.net/workspaces/3G4s5mBhLTf7W7zaTXclElmUKYoBRrwC/7f76e036-2123-4492-925c-0740e0852771/files/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🌍 SocialWorld – Live Multiplayer</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{
+  --primary:#6c63ff;--secondary:#ff6584;--accent:#43e97b;
+  --dark:#1a1a2e;--darker:#0f0f1a;--card:#16213e;--card2:#1e2a4a;
+  --text:#e0e0ff;--muted:#8888aa;--gold:#ffd700;--danger:#ff4757;--success:#2ed573;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--darker);color:var(--text);font-family:'Segoe UI',sans-serif;overflow:hidden;height:100dvh;width:100vw;}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;}
+.screen.active{display:flex;}
+
+/* Stars */
+.stars{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.star{position:absolute;border-radius:50%;background:white;animation:twinkle 3s infinite alternate;}
+@keyframes twinkle{from{opacity:.15}to{opacity:.9}}
+
+/* Buttons */
+.btn{padding:.7rem 1.8rem;border:none;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;touch-action:manipulation;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),#9c63ff);color:white;box-shadow:0 4px 20px rgba(108,99,255,.4);}
+.btn-primary:hover{transform:translateY(-2px);}
+.btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--card2);}
+.btn-danger{background:var(--danger);color:white;}
+.btn-sm{padding:.4rem 1rem;font-size:.8rem;}
+.btn:active{transform:scale(.97);}
+
+/* Loading */
+#loading{background:var(--darker);gap:1rem;}
+.loading-logo{font-size:3rem;font-weight:900;background:linear-gradient(135deg,#6c63ff,#ff6584,#43e97b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.spinner{width:44px;height:44px;border:3px solid var(--card2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-bar-wrap{width:min(300px,80vw);height:6px;background:var(--card);border-radius:3px;overflow:hidden;}
+.loading-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:3px;transition:width .35s;}
+.loading-sub{font-size:.85rem;color:var(--muted);}
+
+/* Welcome Back */
+#welcome{background:linear-gradient(135deg,#0f0f1a,#1a1a3e,#0f1a2e);}
+.welcome-card{background:var(--card);border-radius:28px;padding:2.5rem 2rem;width:min(400px,92vw);display:flex;flex-direction:column;align-items:center;gap:1.25rem;z-index:1;}
+.welcome-title{font-size:1.1rem;color:var(--muted);}
+.welcome-name{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.welcome-avatar-wrap{width:120px;height:150px;background:var(--card2);border-radius:20px;display:flex;align-items:center;justify-content:center;border:2px solid var(--primary);}
+.welcome-btns{display:flex;flex-direction:column;gap:.75rem;width:100%;}
+
+/* Connecting */
+#connecting{background:var(--darker);gap:1.25rem;}
+.connecting-logo{font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,#6c63ff,#ff6584,#43e97b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.connecting-msg{font-size:1rem;color:var(--muted);}
+.connecting-steps{display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem;}
+.conn-step{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:.5rem;}
+.conn-step.done{color:var(--success);}
+.conn-step.active{color:var(--primary);}
+
+/* Creator */
+#creator{background:var(--darker);overflow-y:auto;padding:1rem;align-items:flex-start;}
+.creator-wrap{width:100%;max-width:700px;margin:0 auto;}
+.creator-title{font-size:1.8rem;font-weight:800;margin-bottom:1.25rem;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.creator-layout{display:flex;gap:1.5rem;flex-wrap:wrap;}
+.avatar-preview{flex:0 0 190px;display:flex;flex-direction:column;align-items:center;gap:1rem;}
+.avatar-canvas-wrap{width:150px;height:190px;border-radius:20px;background:var(--card);display:flex;align-items:center;justify-content:center;border:2px solid var(--primary);overflow:hidden;}
+#avatarPreview{width:130px;height:170px;}
+.creator-options{flex:1;min-width:260px;display:flex;flex-direction:column;gap:.85rem;}
+.option-group{background:var(--card);border-radius:12px;padding:.75rem;}
+.opt-label{font-size:.72rem;color:var(--muted);margin-bottom:.45rem;text-transform:uppercase;letter-spacing:1px;}
+.color-row{display:flex;gap:.45rem;flex-wrap:wrap;}
+.color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s;flex-shrink:0;}
+.color-swatch.active{border-color:white;transform:scale(1.18);}
+.style-row{display:flex;gap:.45rem;flex-wrap:wrap;}
+.style-chip{padding:.28rem .65rem;background:var(--card2);border-radius:20px;cursor:pointer;font-size:.78rem;border:1px solid transparent;transition:all .2s;}
+.style-chip.active{background:var(--primary);border-color:var(--primary);}
+.name-input{width:100%;padding:.6rem 1rem;background:var(--card2);border:1px solid var(--card2);border-radius:10px;color:var(--text);font-size:1rem;outline:none;}
+.name-input:focus{border-color:var(--primary);}
+
+/* Game */
+#game{background:var(--darker);flex-direction:row;}
+#worldCanvas{display:block;flex:1;touch-action:none;}
+#hud{position:absolute;inset:0;pointer-events:none;}
+#hud>*{pointer-events:all;}
+
+/* Top Bar */
+#topBar{position:absolute;top:0;left:0;right:0;padding:.5rem .85rem;display:flex;align-items:center;gap:.55rem;background:linear-gradient(180deg,rgba(10,10,26,.96)0%,transparent 100%);}
+.player-pill{display:flex;align-items:center;gap:.45rem;background:var(--card);border-radius:50px;padding:.28rem .7rem .28rem .28rem;}
+.hud-avatar{width:30px;height:30px;border-radius:50%;overflow:hidden;border:2px solid var(--primary);}
+.hud-name{font-weight:700;font-size:.88rem;}
+.level-badge{background:var(--primary);border-radius:50px;padding:.18rem .55rem;font-size:.68rem;font-weight:700;}
+.coin-pill{display:flex;align-items:center;gap:.4rem;background:var(--card);border-radius:50px;padding:.28rem .7rem;}
+.coin-amt{font-weight:700;font-size:.88rem;color:var(--gold);}
+.online-pill{display:flex;align-items:center;gap:.4rem;background:var(--card);border-radius:50px;padding:.28rem .7rem;}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.online-num{font-size:.8rem;font-weight:700;color:var(--success);}
+.spacer{flex:1;}
+.icon-btn{width:36px;height:36px;border-radius:50%;background:var(--card);border:none;color:var(--text);font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;touch-action:manipulation;}
+.icon-btn:hover{background:var(--card2);}
+
+/* Room label */
+#roomLabel{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:rgba(22,33,62,.9);border-radius:50px;padding:.28rem .9rem;font-size:.78rem;color:var(--accent);font-weight:600;pointer-events:none;white-space:nowrap;}
+
+/* Minimap */
+#minimap{position:absolute;top:60px;right:.7rem;width:95px;height:78px;background:rgba(22,33,62,.85);border-radius:10px;border:1px solid var(--card2);overflow:hidden;}
+#minimapCanvas{width:100%;height:100%;}
+
+/* Chat */
+#chatLog{position:absolute;bottom:115px;left:.7rem;right:.7rem;max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:.28rem;pointer-events:none;}
+.chat-msg{background:rgba(22,33,62,.85);border-radius:12px;padding:.38rem .7rem;font-size:.8rem;max-width:78%;animation:fadeUp .3s;}
+.chat-msg.self{align-self:flex-end;background:rgba(108,99,255,.5);}
+.chat-msg .sender{font-weight:700;color:var(--primary);font-size:.7rem;}
+.chat-msg.sys{align-self:center;background:rgba(67,233,123,.11);color:var(--accent);font-style:italic;text-align:center;max-width:100%;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+#chatBar{position:absolute;bottom:68px;left:.7rem;right:.7rem;display:flex;gap:.45rem;}
+#chatInput{flex:1;padding:.58rem 1rem;background:rgba(22,33,62,.92);border:1px solid var(--card2);border-radius:50px;color:var(--text);font-size:.88rem;outline:none;}
+#chatInput:focus{border-color:var(--primary);}
+#chatSend{width:38px;height:38px;border-radius:50%;background:var(--primary);border:none;color:white;font-size:1.05rem;cursor:pointer;touch-action:manipulation;flex-shrink:0;}
+
+/* Bottom Nav */
+#bottomNav{position:absolute;bottom:0;left:0;right:0;padding:.3rem;background:linear-gradient(0deg,rgba(10,10,26,.96)0%,transparent 100%);display:flex;justify-content:space-around;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:.12rem;background:none;border:none;color:var(--muted);cursor:pointer;padding:.38rem .7rem;border-radius:12px;transition:all .2s;touch-action:manipulation;font-size:.65rem;}
+.nav-btn .nav-icon{font-size:1.25rem;}
+.nav-btn.active,.nav-btn:hover{color:var(--primary);background:rgba(108,99,255,.1);}
+
+/* Move ripple */
+#worldCanvas{cursor:crosshair;}
+
+/* Panels */
+.panel{position:absolute;top:60px;right:0;bottom:56px;width:min(330px,100vw);background:var(--card);border-left:1px solid var(--card2);display:none;flex-direction:column;overflow:hidden;animation:slideIn .22s;z-index:10;}
+.panel.open{display:flex;}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.panel-header{padding:.8rem 1rem;border-bottom:1px solid var(--card2);display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+.panel-title{font-weight:700;font-size:.98rem;flex:1;}
+.panel-close{background:none;border:none;color:var(--muted);font-size:1.15rem;cursor:pointer;}
+.panel-body{flex:1;overflow-y:auto;padding:.8rem;display:flex;flex-direction:column;gap:.65rem;}
+.panel-tabs{display:flex;border-bottom:1px solid var(--card2);flex-shrink:0;}
+.panel-tab{flex:1;padding:.6rem;text-align:center;cursor:pointer;font-size:.78rem;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;}
+.panel-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:700;}
+
+/* Player cards */
+.player-card{background:var(--card2);border-radius:12px;padding:.65rem;display:flex;align-items:center;gap:.65rem;}
+.pc-av{width:46px;height:56px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid var(--primary);}
+.pc-info{flex:1;}
+.pc-name{font-weight:700;font-size:.86rem;}
+.pc-sub{font-size:.7rem;color:var(--muted);margin-top:.12rem;}
+.s-online{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);margin-right:.2rem;}
+
+/* Shop */
+.shop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.65rem;}
+.shop-item{background:var(--card2);border-radius:12px;padding:.7rem;text-align:center;cursor:pointer;transition:all .2s;border:1px solid transparent;}
+.shop-item:hover{border-color:var(--primary);transform:translateY(-2px);}
+.shop-item.owned{border-color:var(--success);}
+.s-emoji{font-size:2.2rem;margin-bottom:.28rem;}
+.s-name{font-size:.76rem;font-weight:600;margin-bottom:.28rem;}
+.s-price{font-size:.72rem;color:var(--gold);font-weight:700;}
+
+/* Achievements */
+.ach-item{background:var(--card2);border-radius:12px;padding:.65rem;display:flex;align-items:center;gap:.7rem;}
+.ach-icon{font-size:1.65rem;flex-shrink:0;}
+.ach-name{font-weight:700;font-size:.84rem;}
+.ach-desc{font-size:.7rem;color:var(--muted);}
+.ach-bar-wrap{height:4px;background:var(--card);border-radius:2px;margin-top:.32rem;}
+.ach-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--primary),var(--accent));}
+
+/* Toasts */
+#toastArea{position:absolute;top:65px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:.38rem;pointer-events:none;z-index:100;width:min(350px,90vw);}
+.toast{background:var(--card);border-radius:12px;padding:.6rem .9rem;display:flex;align-items:center;gap:.6rem;animation:tin .3s,tout .3s 2.7s forwards;border-left:3px solid var(--accent);font-size:.84rem;}
+.toast.gold{border-left-color:var(--gold);}
+.toast.bad{border-left-color:var(--danger);}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tout{to{opacity:0;transform:translateY(-8px)}}
+
+/* Modal */
+#modal{position:absolute;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:1rem;}
+#modal.open{display:flex;}
+.modal-box{background:var(--card);border-radius:20px;padding:1.5rem;width:100%;max-width:370px;}
+.modal-title{font-size:1.12rem;font-weight:700;margin-bottom:1rem;}
+.modal-actions{display:flex;gap:.7rem;margin-top:1.2rem;justify-content:flex-end;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--card2);border-radius:2px;}
+
+
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<!-- LOADING -->
+<div id="loading" class="screen active">
+  <div class="loading-logo">🌍 SocialWorld</div>
+  <div class="spinner"></div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loadBar" style="width:0%"></div></div>
+  <div class="loading-sub" id="loadTxt">Starting up...</div>
+</div>
+
+<!-- WELCOME BACK (returning users) -->
+<div id="welcome" class="screen">
+  <div class="welcome-card">
+    <div class="welcome-title">Welcome back! 👋</div>
+    <div class="welcome-name" id="welcomeName">Player</div>
+    <div class="welcome-avatar-wrap">
+      <canvas id="welcomeAv" width="120" height="150"></canvas>
+    </div>
+    <div class="welcome-btns">
+      <button class="btn btn-primary" onclick="beginJoinWorld()">🚀 Jump In!</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('creator')">✏️ Edit Avatar</button>
+    </div>
+  </div>
+</div>
+
+<!-- AVATAR CREATOR (new users) -->
+<div id="creator" class="screen">
+  <div class="creator-wrap">
+    <div class="creator-title">✨ Create Your Avatar</div>
+    <div class="creator-layout">
+      <div class="avatar-preview">
+        <div class="avatar-canvas-wrap">
+          <canvas id="avatarPreview" width="130" height="170"></canvas>
+        </div>
+        <div style="font-size:.78rem;color:var(--muted);">Your look</div>
+        <button class="btn btn-secondary btn-sm" onclick="randomAvatar()">🎲 Random</button>
+      </div>
+      <div class="creator-options">
+        <div class="option-group">
+          <div class="opt-label">👤 Your Name</div>
+          <input class="name-input" id="nameInput" placeholder="Enter your name..." maxlength="16">
+        </div>
+        <div class="option-group">
+          <div class="opt-label">🎨 Skin Tone</div>
+          <div class="color-row" id="skinRow"></div>
+        </div>
+        <div class="option-group">
+          <div class="opt-label">💇 Hair Style</div>
+          <div class="style-row" id="hairStyleRow"></div>
+        </div>
+        <div class="option-group">
+          <div class="opt-label">🎨 Hair Color</div>
+          <div class="color-row" id="hairColorRow"></div>
+        </div>
+        <div class="option-group">
+          <div class="opt-label">👕 Outfit</div>
+          <div class="style-row" id="outfitRow"></div>
+        </div>
+        <div class="option-group">
+          <div class="opt-label">🎨 Outfit Color</div>
+          <div class="color-row" id="outfitColorRow"></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="saveAndJoin()">🚀 Enter World!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONNECTING -->
+<div id="connecting" class="screen">
+  <div class="connecting-logo">🌍 SocialWorld</div>
+  <div class="spinner"></div>
+  <div class="connecting-msg" id="connMsg">Joining the world...</div>
+  <div class="connecting-steps" id="connSteps">
+    <div class="conn-step active" id="cs1">⏳ Starting network...</div>
+    <div class="conn-step" id="cs2">⏳ Finding the world...</div>
+    <div class="conn-step" id="cs3">⏳ Entering the world...</div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <canvas id="worldCanvas"></canvas>
+  <div id="hud">
+    <!-- Top Bar -->
+    <div id="topBar">
+      <div class="player-pill">
+        <div class="hud-avatar"><canvas id="hudAv" width="30" height="30"></canvas></div>
+        <div class="hud-name" id="hudName">Player</div>
+        <div class="level-badge" id="hudLevel">Lv.1</div>
+      </div>
+      <div class="coin-pill">🪙 <span class="coin-amt" id="coinAmt">0</span></div>
+      <div class="online-pill"><div class="online-dot"></div><span class="online-num" id="onlineNum">1</span></div>
+      <div class="spacer"></div>
+      <button class="icon-btn" onclick="togglePanel('playersPanel')" title="Players">👥</button>
+      <button class="icon-btn" onclick="togglePanel('shopPanel')" title="Shop">🛍️</button>
+      <button class="icon-btn" onclick="togglePanel('profilePanel')" title="Profile">👤</button>
+      <button class="icon-btn" onclick="togglePanel('settingsPanel')" title="Settings">⚙️</button>
+    </div>
+    <div id="roomLabel">🏙️ Central Plaza</div>
+    <div id="minimap"><canvas id="minimapCanvas" width="95" height="78"></canvas></div>
+    <div id="chatLog"></div>
+    <div id="chatBar">
+      <input id="chatInput" placeholder="Chat... (Enter to send)" maxlength="100">
+      <button id="chatSend" onclick="sendChat()">➤</button>
+    </div>
+    <div id="bottomNav">
+      <button class="nav-btn active" onclick="navRoom(this,'plaza')"><span class="nav-icon">🏙️</span>Plaza</button>
+      <button class="nav-btn" onclick="navRoom(this,'beach')"><span class="nav-icon">🏖️</span>Beach</button>
+      <button class="nav-btn" onclick="navRoom(this,'cafe')"><span class="nav-icon">☕</span>Café</button>
+      <button class="nav-btn" onclick="navRoom(this,'arcade')"><span class="nav-icon">🕹️</span>Arcade</button>
+      <button class="nav-btn" onclick="navRoom(this,'music')"><span class="nav-icon">🎵</span>Music</button>
+    </div>
+
+
+    <!-- Players Panel -->
+    <div class="panel" id="playersPanel">
+      <div class="panel-header"><span class="panel-title">👥 Players Online</span><button class="panel-close" onclick="closePanel('playersPanel')">✕</button></div>
+      <div class="panel-body" id="playersPanelBody"></div>
+    </div>
+
+    <!-- Shop Panel -->
+    <div class="panel" id="shopPanel">
+      <div class="panel-header"><span class="panel-title">🛍️ Shop</span><button class="panel-close" onclick="closePanel('shopPanel')">✕</button></div>
+      <div class="panel-tabs">
+        <div class="panel-tab active" onclick="setShopTab('clothes',this)">Clothes</div>
+        <div class="panel-tab" onclick="setShopTab('pets',this)">Pets</div>
+        <div class="panel-tab" onclick="setShopTab('effects',this)">Effects</div>
+      </div>
+      <div class="panel-body" id="shopBody"></div>
+    </div>
+
+    <!-- Profile Panel -->
+    <div class="panel" id="profilePanel">
+      <div class="panel-header"><span class="panel-title">👤 My Profile</span><button class="panel-close" onclick="closePanel('profilePanel')">✕</button></div>
+      <div class="panel-body" id="profileBody"></div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="panel" id="settingsPanel">
+      <div class="panel-header"><span class="panel-title">⚙️ Settings</span><button class="panel-close" onclick="closePanel('settingsPanel')">✕</button></div>
+      <div class="panel-body" id="settingsBody"></div>
+    </div>
+
+    <div id="toastArea"></div>
+    <div id="modal"><div class="modal-box" id="modalBox"></div></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+const SKINS         = ['#FDBCB4','#F1C27D','#E8B88A','#C68642','#8D5524','#FFCBA4'];
+const HAIR_COLORS   = ['#3d2b1f','#1a1a1a','#8B4513','#FFD700','#DC143C','#9400D3','#00CED1','#FF69B4'];
+const HAIR_STYLES   = ['Classic','Wavy','Short','Curly','Mohawk','Bun'];
+const OUTFITS       = ['Casual','Sporty','Formal','Cozy','Street','Fantasy'];
+const OUTFIT_COLORS = ['#4a90d9','#e74c3c','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e91e63','#ff5722'];
+const EMOTES        = ['👋','😄','❤️','💃','🤣','🎉','👍','😎','🥰','🌟'];
+const ROOMS = {
+  plaza:  { name:'Central Plaza', emoji:'🏙️', color:'#1a2a4a', ground:'#2a3a5a' },
+  beach:  { name:'Beach',         emoji:'🏖️', color:'#1a3a4a', ground:'#c8a96a' },
+  cafe:   { name:'Café',          emoji:'☕', color:'#3a2a1a', ground:'#4a3a2a' },
+  arcade: { name:'Arcade',        emoji:'🕹️', color:'#1a1a4a', ground:'#2a1a4a' },
+  music:  { name:'Music Venue',   emoji:'🎵', color:'#2a1a3a', ground:'#3a1a4a' },
+  park:   { name:'Park',          emoji:'🌳', color:'#1a3a1a', ground:'#2a5a2a' },
+};
+const SHOP_DATA = {
+  clothes:  [{n:'Rainbow Jacket',e:'🌈',p:150},{n:'Space Suit',e:'🚀',p:300},{n:'Sun Hat',e:'👒',p:80},{n:'Cape',e:'🦸',p:250},{n:'Party Fit',e:'🎊',p:200}],
+  pets:     [{n:'Kitty',e:'🐱',p:200},{n:'Puppy',e:'🐶',p:200},{n:'Bunny',e:'🐰',p:180},{n:'Dragon',e:'🐲',p:500},{n:'Unicorn',e:'🦄',p:600}],
+  effects:  [{n:'Sparkles',e:'✨',p:250},{n:'Rainbow Trail',e:'🌈',p:400},{n:'Hearts',e:'💕',p:200},{n:'Stars',e:'⭐',p:300}],
+};
+const PROFILE_KEY = 'sw_profile_v3';
+
+// ═══════════════════════════════════════════════════════════════
+//  PLAYER STATE
+// ═══════════════════════════════════════════════════════════════
+const P = {
+  name:'Player', skin:SKINS[0], hair:HAIR_COLORS[0], hairStyle:0, outfit:0, outfitColor:OUTFIT_COLORS[0],
+  x:400, y:300, vx:0, vy:0, moving:false, facing:'down',
+  emote:null, emoteTimer:0, chatBubble:null, chatTimer:0,
+  coins:200, level:1, xp:0, room:'plaza', pet:null,
+  owned:{ clothes:[], pets:[], effects:[] },
+  msgCount:0, roomsVisited:['plaza'],
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  P2P — SHARED WORLD (everyone auto-joins same hub)
+// ═══════════════════════════════════════════════════════════════
+// Everyone tries to claim this hub ID. First one gets it as host.
+// Others connect as clients. We relay peer lists for mesh.
+const HUB_ID = 'SW-WORLD-HUB-2025'; // Fixed — same for everyone
+
+let peer      = null;
+let myId      = null;
+let isHub     = false;
+let conns     = {};           // peerId -> DataConnection
+let remotes   = {};           // peerId -> player data
+const seenPeers = new Set();  // prevent duplicate join toasts
+
+let frameCount = 0, lastTime = 0;
+const keys = {};
+// Click/touch-to-move target
+const moveTarget = { x:null, y:null, active:false };
+let ripples = []; // visual ripple indicators
+let shopTab = 'clothes';
+let emoteWheelEl = null;
+
+// ═══════════════════════════════════════════════════════════════
+//  LOCAL STORAGE PROFILE
+// ═══════════════════════════════════════════════════════════════
+function saveProfile() {
+  const data = {
+    name:P.name, skin:P.skin, hair:P.hair, hairStyle:P.hairStyle,
+    outfit:P.outfit, outfitColor:P.outfitColor,
+    coins:P.coins, level:P.level, xp:P.xp,
+    owned:P.owned
+  };
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
+}
+
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if(!raw) return false;
+    const d = JSON.parse(raw);
+    Object.assign(P, d);
+    if(!P.owned) P.owned = { clothes:[], pets:[], effects:[] };
+    return true;
+  } catch(e) { return false; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NETWORK INIT
+// ═══════════════════════════════════════════════════════════════
+function beginJoinWorld() {
+  saveProfile();
+  showScreen('connecting');
+  setConnStep(1);
+  setTimeout(() => startPeer(), 300);
+}
+
+function startPeer() {
+  // Try to claim the Hub ID
+  const tryHub = new Peer(HUB_ID, {
+    debug: 0,
+    config: { iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'}
+    ]}
+  });
+
+  tryHub.on('open', id => {
+    // We ARE the hub
+    peer = tryHub;
+    myId = id;
+    isHub = true;
+    peer.on('connection', conn => incomingConn(conn));
+    peer.on('error', e => console.warn('Hub peer error:', e));
+    setConnStep(2);
+    setTimeout(() => { setConnStep(3); setTimeout(enterWorld, 600); }, 700);
+  });
+
+  tryHub.on('error', err => {
+    if(err.type === 'unavailable-id' || err.type === 'peer-unavailable') {
+      // Hub is taken — connect as client
+      tryHub.destroy();
+      connectAsClient();
+    } else {
+      console.warn('Peer error:', err.type);
+      tryHub.destroy();
+      connectAsClient();
+    }
+  });
+}
+
+function connectAsClient() {
+  setConnStep(1, 'done');
+  setConnStep(2, 'active');
+
+  const clientPeer = new Peer(undefined, {
+    debug: 0,
+    config: { iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'}
+    ]}
+  });
+
+  clientPeer.on('open', id => {
+    peer = clientPeer;
+    myId = id;
+    isHub = false;
+
+    // Listen for incoming mesh connections
+    peer.on('connection', conn => incomingConn(conn));
+    peer.on('error', e => console.warn('Client peer error:', e));
+
+    // Connect to the hub
+    const hubConn = peer.connect(HUB_ID, { reliable:true, serialization:'json' });
+
+    hubConn.on('open', () => {
+      registerConn(hubConn);
+      setConnStep(2, 'done');
+      setConnStep(3, 'active');
+      setTimeout(enterWorld, 700);
+    });
+
+    hubConn.on('error', () => {
+      // Hub might have just gone offline — try to reclaim
+      hubConn.close();
+      setConnStep(2, 'done');
+      setConnStep(3, 'active');
+      setTimeout(() => { startPeer(); }, 800);
+    });
+  });
+
+  clientPeer.on('error', e => {
+    console.warn('Client peer error:', e);
+    // Still enter the world solo if networking fails
+    setTimeout(enterWorld, 1000);
+  });
+}
+
+function incomingConn(conn) {
+  if(conns[conn.peer]) { conn.close(); return; } // already connected
+  registerConn(conn);
+}
+
+function registerConn(conn) {
+  if(conns[conn.peer]) return;
+  conns[conn.peer] = conn;
+
+  conn.on('open', () => {
+    // Send my data tagged as 'init' (first time only)
+    conn.send({ type:'init', player: myData() });
+
+    // If I have other connections, relay their IDs so mesh can form
+    const others = Object.keys(conns).filter(id => id !== conn.peer);
+    if(others.length > 0) conn.send({ type:'peers', list: others });
+  });
+
+  conn.on('data', data => handleMsg(conn.peer, data));
+
+  conn.on('close', () => dropPeer(conn.peer));
+  conn.on('error', ()  => dropPeer(conn.peer));
+}
+
+function handleMsg(peerId, msg) {
+  switch(msg.type) {
+
+    case 'init': {
+      // Someone connected for the first time
+      const isNew = !remotes[peerId];
+      remotes[peerId] = {
+        ...msg.player,
+        chatBubble:null, chatTimer:0, emote:null, emoteTimer:0, frameCount:0
+      };
+      // Show join toast ONCE per peer
+      if(isNew && !seenPeers.has(peerId)) {
+        seenPeers.add(peerId);
+        toast(`👋 ${msg.player.name} joined!`);
+        sysMsg(`${msg.player.name} joined the world! 🎉`);
+      }
+      // Send back our data as 'update' (no toast triggered)
+      if(conns[peerId]?.open) {
+        conns[peerId].send({ type:'update', player: myData() });
+      }
+      updateOnlineCount();
+      fillPlayersPanel();
+      break;
+    }
+
+    case 'update': {
+      // Response to our init — update data silently (no toast)
+      if(!remotes[peerId]) {
+        remotes[peerId] = {
+          ...msg.player,
+          chatBubble:null, chatTimer:0, emote:null, emoteTimer:0, frameCount:0
+        };
+        if(!seenPeers.has(peerId)) {
+          seenPeers.add(peerId);
+          toast(`👋 ${msg.player.name} joined!`);
+          sysMsg(`${msg.player.name} joined the world! 🎉`);
+        }
+        updateOnlineCount();
+        fillPlayersPanel();
+      } else {
+        Object.assign(remotes[peerId], msg.player);
+      }
+      break;
+    }
+
+    case 'move': {
+      if(remotes[peerId]) {
+        remotes[peerId].x       = msg.x;
+        remotes[peerId].y       = msg.y;
+        remotes[peerId].moving  = msg.moving;
+        remotes[peerId].facing  = msg.facing;
+        remotes[peerId].frameCount = msg.fc;
+      }
+      break;
+    }
+
+    case 'chat': {
+      if(remotes[peerId]) {
+        remotes[peerId].chatBubble = msg.text;
+        remotes[peerId].chatTimer  = 4.5;
+        addChat(remotes[peerId].name||'?', msg.text, false);
+      }
+      break;
+    }
+
+    case 'emote': {
+      if(remotes[peerId]) {
+        remotes[peerId].emote      = msg.emote;
+        remotes[peerId].emoteTimer = 3;
+      }
+      break;
+    }
+
+    case 'room': {
+      if(remotes[peerId]) remotes[peerId].room = msg.room;
+      break;
+    }
+
+    case 'peers': {
+      // Connect to peers we don't know yet (mesh)
+      (msg.list || []).forEach(pid => {
+        if(pid && pid !== myId && !conns[pid]) {
+          const c = peer.connect(pid, { reliable:true, serialization:'json' });
+          registerConn(c);
+        }
+      });
+      break;
+    }
+
+    case 'bye': {
+      dropPeer(peerId);
+      break;
+    }
+  }
+}
+
+function dropPeer(peerId) {
+  const rp = remotes[peerId];
+  if(rp) { toast(`${rp.name} left`, 'bad'); sysMsg(`${rp.name} left the world.`); }
+  delete conns[peerId];
+  delete remotes[peerId];
+  updateOnlineCount();
+  fillPlayersPanel();
+}
+
+function myData() {
+  return {
+    name:P.name, skin:P.skin, hair:P.hair, hairStyle:P.hairStyle,
+    outfit:P.outfit, outfitColor:P.outfitColor,
+    x:P.x, y:P.y, moving:P.moving, facing:P.facing,
+    room:P.room, pet:P.pet,
+    frameCount
+  };
+}
+
+function broadcast(msg) {
+  Object.values(conns).forEach(c => { try { if(c?.open) c.send(msg); } catch(e){} });
+}
+
+let lastSync = 0;
+function syncPos() {
+  const now = Date.now();
+  if(now - lastSync < 55) return;
+  lastSync = now;
+  broadcast({ type:'move', x:P.x, y:P.y, moving:P.moving, facing:P.facing, fc:frameCount });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  GAME INIT
+// ═══════════════════════════════════════════════════════════════
+function enterWorld() {
+  showScreen('game');
+  const canvas = document.getElementById('worldCanvas');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  P.x = canvas.width/2 + (Math.random()-.5)*60;
+  P.y = canvas.height/2 + (Math.random()-.5)*40;
+
+  document.addEventListener('keydown', e => {
+    keys[e.key.toLowerCase()] = true;
+    if(e.key===' ') { e.preventDefault(); openEmoteWheel(); }
+    if((e.key==='t'||e.key==='T') && document.activeElement !== document.getElementById('chatInput')) {
+      e.preventDefault(); document.getElementById('chatInput').focus();
+    }
+  });
+  document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+  document.getElementById('chatInput').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+  const wc = document.getElementById('worldCanvas');
+  wc.addEventListener('click', canvasClick);
+  wc.addEventListener('touchstart', canvasTouchStart, { passive:false });
+  wc.addEventListener('touchmove',  canvasTouchMove,  { passive:false });
+
+  document.getElementById('hudName').textContent = P.name;
+  document.getElementById('hudLevel').textContent = `Lv.${P.level}`;
+  document.getElementById('coinAmt').textContent  = P.coins;
+  drawHudAv();
+  updateOnlineCount();
+  fillPlayersPanel();
+  fillShopPanel();
+  fillProfilePanel();
+  fillSettingsPanel();
+
+  requestAnimationFrame(gameLoop);
+
+  sysMsg(`Welcome to SocialWorld, ${P.name}! 🌍 Tap/click anywhere to walk there. WASD also works. Press T to chat.`);
+  toast('🌍 You joined the world!');
+
+  // Periodic coin trickle
+  setInterval(() => { P.coins += 3; document.getElementById('coinAmt').textContent = P.coins; saveProfile(); }, 12000);
+}
+
+function resizeCanvas() {
+  const c = document.getElementById('worldCanvas');
+  c.width  = window.innerWidth;
+  c.height = window.innerHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  GAME LOOP
+// ═══════════════════════════════════════════════════════════════
+function gameLoop(ts) {
+  const dt = Math.min((ts - lastTime) / 16.67, 3);
+  lastTime = ts;
+  frameCount++;
+
+  const canvas = document.getElementById('worldCanvas');
+  const ctx    = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  updatePlayer(dt, W, H);
+  tickTimers(dt);
+  syncPos();
+  drawScene(ctx, W, H);
+  drawRipples(ctx);
+  drawMinimap();
+
+  requestAnimationFrame(gameLoop);
+}
+
+function updatePlayer(dt, W, H) {
+  let dx=0, dy=0;
+  // WASD keyboard
+  if(keys['w']||keys['arrowup'])    dy=-1;
+  if(keys['s']||keys['arrowdown'])  dy= 1;
+  if(keys['a']||keys['arrowleft'])  dx=-1;
+  if(keys['d']||keys['arrowright']) dx= 1;
+
+  // Click / touch-to-move (only if no keyboard pressed)
+  if(moveTarget.active && dx===0 && dy===0) {
+    const tdx = moveTarget.x - P.x;
+    const tdy = moveTarget.y - P.y;
+    const dist = Math.sqrt(tdx*tdx + tdy*tdy);
+    if(dist > 6) { dx = tdx/dist; dy = tdy/dist; }
+    else { moveTarget.active = false; }
+  }
+
+  const mag = Math.sqrt(dx*dx+dy*dy);
+  if(mag>0){ dx/=mag; dy/=mag; }
+  P.moving = mag > 0.05;
+  if(dx<-0.1) P.facing='left'; else if(dx>0.1) P.facing='right';
+  if(dy<-0.1) P.facing='up';   else if(dy>0.1) P.facing='down';
+  const spd = 3.2;
+  P.x = Math.max(40, Math.min(W-40, P.x + dx*spd*dt));
+  P.y = Math.max(100, Math.min(H-100, P.y + dy*spd*dt));
+
+  // Update ripples
+  ripples = ripples.filter(r => r.alpha > 0);
+  ripples.forEach(r => { r.r += 1.8*dt; r.alpha -= 0.022*dt; });
+}
+
+function tickTimers(dt) {
+  const sec = dt/60;
+  if(P.emoteTimer>0){ P.emoteTimer-=sec; if(P.emoteTimer<=0) P.emote=null; }
+  if(P.chatTimer>0)  P.chatTimer -= sec;
+  Object.values(remotes).forEach(r => {
+    if(r.emoteTimer>0){ r.emoteTimer-=sec; if(r.emoteTimer<=0) r.emote=null; }
+    if(r.chatTimer>0)  r.chatTimer -= sec;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DRAWING
+// ═══════════════════════════════════════════════════════════════
+function drawScene(ctx, W, H) {
+  const room = ROOMS[P.room];
+  ctx.fillStyle = room.color;
+  ctx.fillRect(0,0,W,H);
+  drawGround(ctx,W,H,room);
+  drawDecor(ctx,W,H);
+
+  // Collect all visible entities sorted by Y
+  const entities = [{ me:true, p:P, y:P.y }];
+  Object.values(remotes).forEach(r => {
+    if(r.room === P.room) entities.push({ me:false, p:r, y:r.y });
+  });
+  entities.sort((a,b) => a.y - b.y);
+
+  entities.forEach(ent => {
+    const p = ent.p;
+    const s = ent.me ? 1 : 0.92;
+    drawAvatar(ctx, p, p.x, p.y, s, true);
+    drawNameTag(ctx, ent.me ? p.name+' (You)' : p.name, p.x, p.y - 52*s, ent.me ? '#6c63ff' : '#ff6584');
+    drawChatBubble(ctx, p);
+    if(ent.me && p.pet !== null) {
+      const pets = ['🐱','🐶','🐰','🐲','🦄'];
+      ctx.font='20px serif'; ctx.textAlign='center';
+      ctx.fillText(pets[p.pet]||'🐱', p.x-26, p.y+4);
+    }
+  });
+
+  // Room HUD: player count in this room
+  const here = Object.values(remotes).filter(r=>r.room===P.room).length + 1;
+  ctx.fillStyle='rgba(22,33,62,.6)';
+  ctx.fillRect(W-130,H-38,126,30);
+  ctx.fillStyle='rgba(200,200,255,.65)'; ctx.font='11px Segoe UI'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText(`👥 ${here} in this room`, W-122, H-23);
+}
+
+function drawGround(ctx,W,H,room){
+  const ts=60;
+  for(let x=0;x<W+ts;x+=ts) for(let y=80;y<H;y+=ts){
+    const s=((Math.floor(x/ts)+Math.floor(y/ts))%2)===0;
+    ctx.fillStyle = s ? room.ground : shadeHex(room.ground,-14);
+    ctx.fillRect(x-ts/2,y-ts/2,ts,ts);
+  }
+}
+function shadeHex(hex,amt){
+  const r=(x,o,l)=>Math.max(0,Math.min(255,(parseInt(hex.slice(o,l),16)||0)+amt));
+  return `rgb(${r(hex,1,3)},${r(hex,3,5)},${r(hex,5,7)})`;
+}
+
+function drawDecor(ctx,W,H){
+  const r=P.room; const t=frameCount*.04;
+  ctx.save(); ctx.font='34px serif'; ctx.textAlign='center';
+  if(r==='plaza'){
+    ctx.fillStyle='#2a4a6a'; ctx.beginPath(); ctx.arc(W/2,H/2,40,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#3a6a8a'; ctx.beginPath(); ctx.arc(W/2,H/2,28,0,Math.PI*2); ctx.fill();
+    for(let i=0;i<6;i++){const a=i/6*Math.PI*2+t; ctx.fillStyle='rgba(100,180,255,.5)'; ctx.beginPath(); ctx.arc(W/2+Math.cos(a)*13,H/2+Math.sin(a)*13,3.5,0,Math.PI*2); ctx.fill();}
+    ['🌳','🌲','🌴'].forEach((e,i)=>{ctx.fillText(e,80+i*70,155); ctx.fillText(e,W-80-i*70,155);});
+    ctx.fillText('🪑',W/2-90,H/2+82); ctx.fillText('🪑',W/2+90,H/2+82);
+  } else if(r==='beach'){
+    ctx.fillStyle='rgba(255,200,50,.12)'; ctx.beginPath(); ctx.arc(W-90,88,72,0,Math.PI*2); ctx.fill();
+    ctx.fillText('☀️',W-90,100); ctx.fillText('🌊',W/2,H-75); ctx.fillText('🌊',W/2-130,H-95); ctx.fillText('🌊',W/2+130,H-85);
+    ctx.fillText('⛱️',120,H-195); ctx.fillText('🏐',W-130,H-175); ctx.fillText('🦀',180,H-110);
+  } else if(r==='cafe'){
+    ctx.fillText('☕',W/2,162); ctx.fillText('🧁',W/2-85,162); ctx.fillText('🍰',W/2+85,162);
+    ctx.fillText('🪑',W/2-130,H/2); ctx.fillText('🪑',W/2+130,H/2); ctx.fillText('🌿',55,H-172); ctx.fillText('🌿',W-55,H-172);
+  } else if(r==='arcade'){
+    ['🕹️','👾','🎮','🎯','🎳','🏆'].forEach((e,i)=>ctx.fillText(e,80+i*(W-160)/5,168+Math.sin(t+i)*4));
+    ctx.fillStyle='rgba(108,99,255,.04)'; for(let i=0;i<3;i++) ctx.fillRect(50+i*(W/3),78,W/3-18,H-155);
+  } else if(r==='music'){
+    ctx.fillStyle='rgba(108,99,255,.18)'; ctx.fillRect(W/2-120,118,240,78);
+    ctx.fillText('🎸',W/2-60,165); ctx.fillText('🎤',W/2,162); ctx.fillText('🎹',W/2+60,165);
+    ['🎵','🎶','🎼'].forEach((e,i)=>ctx.fillText(e,W/2-60+i*60,222+Math.sin(t+i*2)*14));
+    const sc=Math.abs(Math.sin(t*.5)); ctx.fillStyle=`rgba(255,220,100,${sc*.05})`;
+    ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2-100,H); ctx.lineTo(W/2+100,H); ctx.closePath(); ctx.fill();
+  } else if(r==='park'){
+    ['🌳','🌲','🌳','🌲'].forEach((e,i)=>ctx.fillText(e,60+i*(W-120)/3,162));
+    ctx.fillText('🌸',W/2,H/2+8); ctx.fillText('🌼',W/2-80,H/2+28); ctx.fillText('🌺',W/2+80,H/2+28);
+    ctx.fillText('🦋',W/2+Math.cos(t)*28,H/2-28+Math.sin(t)*14);
+  }
+  ctx.restore();
+}
+
+function drawAvatar(ctx, p, x, y, s=1, animate=false) {
+  const fc = animate && p.moving ? (p.frameCount||frameCount) : 0;
+  const bob = p.moving ? Math.sin(fc*.18)*2*s : 0;
+  ctx.save(); ctx.translate(x, y+bob);
+
+  // Shadow
+  ctx.beginPath(); ctx.ellipse(0,20*s,14*s,4*s,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,.22)'; ctx.fill();
+
+  // Body
+  ctx.fillStyle = p.outfitColor||OUTFIT_COLORS[0];
+  ctx.beginPath(); ctx.roundRect(-11*s,2*s,22*s,20*s,4*s); ctx.fill();
+  const oi=p.outfit||0;
+  if(oi===1){ctx.fillStyle='rgba(255,255,255,.28)'; ctx.fillRect(-11*s,6*s,22*s,3*s);}
+  if(oi===2){ctx.fillStyle='rgba(255,255,255,.75)'; ctx.fillRect(-4*s,2*s,8*s,5*s);}
+
+  // Legs
+  const la=p.moving?Math.sin(fc*.22)*4*s:0;
+  ctx.fillStyle='#2a2a5a';
+  ctx.fillRect(-9*s,20*s,7*s,10*s+la); ctx.fillRect(2*s,20*s,7*s,10*s-la);
+  ctx.fillStyle='#111';
+  ctx.beginPath(); ctx.roundRect(-10*s,28*s+la,9*s,4*s,2*s); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(1*s,28*s-la,9*s,4*s,2*s); ctx.fill();
+
+  // Arms
+  const aa=p.moving?Math.sin(fc*.22+Math.PI)*5*s:0;
+  ctx.fillStyle=p.skin||SKINS[0];
+  ctx.beginPath(); ctx.roundRect(-18*s,2*s+aa,7*s,15*s,3*s); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(11*s,2*s-aa,7*s,15*s,3*s); ctx.fill();
+
+  // Neck + head
+  ctx.fillStyle=p.skin||SKINS[0];
+  ctx.fillRect(-4*s,-4*s,8*s,8*s);
+  ctx.beginPath(); ctx.arc(0,-16*s,14*s,0,Math.PI*2); ctx.fill();
+
+  // Eyes
+  ctx.fillStyle='#1a1a2e';
+  ctx.beginPath(); ctx.ellipse(-5*s,-17*s,3*s,3.5*s,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(5*s,-17*s,3*s,3.5*s,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='white';
+  ctx.beginPath(); ctx.arc(-4*s,-18*s,1.5*s,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(6*s,-18*s,1.5*s,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#1a1a2e'; ctx.lineWidth=1.5*s; ctx.lineCap='round';
+  ctx.beginPath(); ctx.arc(0,-13*s,5*s,.2,Math.PI-.2); ctx.stroke();
+
+  // Hair
+  ctx.fillStyle=p.hair||HAIR_COLORS[0];
+  const hs=p.hairStyle||0;
+  if(hs===0){ctx.beginPath();ctx.arc(0,-22*s,14*s,Math.PI,0);ctx.fill();ctx.fillRect(-14*s,-22*s,28*s,6*s);}
+  else if(hs===1){ctx.beginPath();ctx.arc(0,-22*s,14*s,Math.PI,0);ctx.fill();for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(-10*s+i*10*s,-29*s,5*s,Math.PI,0);ctx.fill();}}
+  else if(hs===2){ctx.beginPath();ctx.arc(0,-22*s,13*s,Math.PI+.3,-.3);ctx.closePath();ctx.fill();}
+  else if(hs===3){for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(-10*s+i*5*s,-20*s,5*s,0,Math.PI*2);ctx.fill();}}
+  else if(hs===4){ctx.beginPath();ctx.moveTo(-4*s,-22*s);ctx.lineTo(0,-38*s);ctx.lineTo(4*s,-22*s);ctx.closePath();ctx.fill();}
+  else if(hs===5){ctx.beginPath();ctx.arc(0,-22*s,14*s,Math.PI,0);ctx.fill();ctx.beginPath();ctx.arc(0,-30*s,7*s,0,Math.PI*2);ctx.fill();}
+
+  if(p.emote){ctx.font=`${13*s}px serif`;ctx.textAlign='center';ctx.fillText(p.emote,0,-36*s);}
+  ctx.restore();
+}
+
+function drawChatBubble(ctx, p) {
+  if(!p.chatBubble || p.chatTimer <= 0) return;
+  const text = p.chatBubble;
+  const cx = p.x, cy = p.y - 70;
+  const alpha = Math.min(1, p.chatTimer);
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = 'bold 12px Segoe UI, sans-serif';
+
+  // Word wrap
+  const words = text.split(' ');
+  const lines = []; let cur = '';
+  words.forEach(w => {
+    const t = cur ? cur+' '+w : w;
+    if(ctx.measureText(t).width > 155 && cur) { lines.push(cur); cur=w; } else cur=t;
+  });
+  if(cur) lines.push(cur);
+
+  const lh=17, px=11, py=8;
+  const bw = Math.min(170, Math.max(...lines.map(l=>ctx.measureText(l).width))) + px*2;
+  const bh = lines.length*lh + py*2;
+  const bx = cx-bw/2, by = cy-bh;
+
+  // Bubble
+  ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=8;
+  ctx.fillStyle='white';
+  ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,12); ctx.fill();
+  ctx.shadowBlur=0;
+
+  // Tail
+  ctx.beginPath(); ctx.moveTo(cx-8,by+bh); ctx.lineTo(cx+8,by+bh); ctx.lineTo(cx,by+bh+10); ctx.closePath(); ctx.fill();
+
+  // Name above bubble
+  ctx.font='bold 10px Segoe UI, sans-serif';
+  ctx.fillStyle='#6c63ff'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText(p.name||'', cx, by-2);
+
+  // Message text
+  ctx.font='bold 12px Segoe UI, sans-serif';
+  ctx.fillStyle='#1a1a2e'; ctx.textBaseline='top';
+  lines.forEach((ln,i) => ctx.fillText(ln, cx, by+py+i*lh));
+
+  ctx.restore();
+}
+
+function drawNameTag(ctx,name,x,y,color='#6c63ff'){
+  ctx.save();
+  const short = name.length>14 ? name.slice(0,13)+'…' : name;
+  ctx.font='bold 11px Segoe UI, sans-serif';
+  const tw=ctx.measureText(short).width;
+  const pad=6;
+  ctx.fillStyle='rgba(10,10,26,.76)';
+  ctx.beginPath(); ctx.roundRect(x-tw/2-pad,y-14,tw+pad*2,18,9); ctx.fill();
+  ctx.fillStyle=color; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(short, x, y-5);
+  ctx.restore();
+}
+
+function drawMinimap(){
+  const mc=document.getElementById('minimapCanvas');
+  const ctx=mc.getContext('2d');
+  const W=mc.width,H=mc.height;
+  const wc=document.getElementById('worldCanvas');
+  const sx=W/(wc.width||800), sy=H/(wc.height||600);
+  const room=ROOMS[P.room];
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=room.color; ctx.fillRect(0,0,W,H);
+  Object.values(remotes).forEach(r=>{
+    if(r.room!==P.room) return;
+    ctx.fillStyle='#ff6584';
+    ctx.beginPath(); ctx.arc(r.x*sx,r.y*sy,2.5,0,Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle='#6c63ff';
+  ctx.beginPath(); ctx.arc(P.x*sx,P.y*sy,3.5,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='white'; ctx.lineWidth=1; ctx.stroke();
+}
+
+function drawHudAv(){
+  const c=document.getElementById('hudAv');
+  if(!c) return;
+  const ctx=c.getContext('2d'); ctx.clearRect(0,0,30,30);
+  ctx.save(); ctx.scale(.35,.35); drawAvatar(ctx,P,43,52,1); ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHAT
+// ═══════════════════════════════════════════════════════════════
+function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim(); if(!msg) return;
+  inp.value='';
+  P.chatBubble=msg; P.chatTimer=4.5;
+  addChat(P.name, msg, true);
+  broadcast({ type:'chat', text:msg });
+  P.msgCount=(P.msgCount||0)+1;
+  saveProfile();
+}
+
+function addChat(sender,text,isSelf=false){
+  const log=document.getElementById('chatLog');
+  const d=document.createElement('div');
+  d.className='chat-msg'+(isSelf?' self':'');
+  d.innerHTML=isSelf?`<div>${esc(text)}</div>`:`<div class="sender">${esc(sender)}</div><div>${esc(text)}</div>`;
+  log.appendChild(d); log.scrollTop=log.scrollHeight;
+  while(log.children.length>45) log.removeChild(log.firstChild);
+}
+
+function sysMsg(text){
+  const log=document.getElementById('chatLog');
+  if(!log) return;
+  const d=document.createElement('div'); d.className='chat-msg sys'; d.textContent=text;
+  log.appendChild(d); log.scrollTop=log.scrollHeight;
+  while(log.children.length>45) log.removeChild(log.firstChild);
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ═══════════════════════════════════════════════════════════════
+//  EMOTE WHEEL
+// ═══════════════════════════════════════════════════════════════
+function openEmoteWheel(){
+  if(emoteWheelEl){ emoteWheelEl.remove(); emoteWheelEl=null; return; }
+  const div=document.createElement('div');
+  div.style.cssText=`position:absolute;left:${P.x-80}px;top:${P.y-165}px;z-index:20;width:160px;height:160px;`;
+  EMOTES.forEach((e,i)=>{
+    const angle=(i/EMOTES.length)*Math.PI*2-Math.PI/2, r=62;
+    const btn=document.createElement('div');
+    btn.style.cssText=`position:absolute;width:40px;height:40px;border-radius:50%;background:var(--card);border:2px solid var(--card2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;left:${70+Math.cos(angle)*r-20}px;top:${80+Math.sin(angle)*r-20}px;transition:transform .15s;touch-action:manipulation;`;
+    btn.textContent=e;
+    btn.onmouseenter=()=>btn.style.transform='scale(1.3)';
+    btn.onmouseleave=()=>btn.style.transform='';
+    btn.onclick=()=>{ doEmote(e); div.remove(); emoteWheelEl=null; };
+    div.appendChild(btn);
+  });
+  const cl=document.createElement('div');
+  cl.style.cssText='position:absolute;width:32px;height:32px;border-radius:50%;background:var(--card2);cursor:pointer;display:flex;align-items:center;justify-content:center;left:64px;top:74px;font-size:.88rem;';
+  cl.textContent='✕'; cl.onclick=()=>{ div.remove(); emoteWheelEl=null; };
+  div.appendChild(cl);
+  document.getElementById('hud').appendChild(div);
+  emoteWheelEl=div;
+}
+
+function doEmote(e){
+  P.emote=e; P.emoteTimer=3;
+  broadcast({type:'emote',emote:e});
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CANVAS CLICK
+// ═══════════════════════════════════════════════════════════════
+function getCanvasXY(ev, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+}
+
+function handleWorldTap(cx, cy) {
+  // Check if tapped a remote player first
+  for(const [pid,rp] of Object.entries(remotes)) {
+    if(rp.room!==P.room) continue;
+    if(Math.abs(rp.x-cx)<30 && Math.abs(rp.y-cy)<48) { showPlayerModal(pid,rp); return; }
+  }
+  // Otherwise move here
+  moveTarget.x = cx;
+  moveTarget.y = cy;
+  moveTarget.active = true;
+  ripples.push({ x:cx, y:cy, r:4, alpha:1 });
+}
+
+function canvasClick(ev) {
+  // Only fire if not a touch event (touches handled separately)
+  if(ev.sourceCapabilities && !ev.sourceCapabilities.firesTouchEvents) {
+    const { x, y } = getCanvasXY(ev, ev.target);
+    handleWorldTap(x, y);
+  } else if(!ev.sourceCapabilities) {
+    const { x, y } = getCanvasXY(ev, ev.target);
+    handleWorldTap(x, y);
+  }
+}
+
+let touchMoved = false;
+function canvasTouchStart(ev) {
+  ev.preventDefault();
+  touchMoved = false;
+}
+function canvasTouchMove(ev) {
+  ev.preventDefault();
+  touchMoved = true;
+  // Drag to walk continuously
+  const t = ev.changedTouches[0];
+  const { x, y } = getCanvasXY(t, ev.target);
+  // Only move if not on a UI element
+  for(const [pid,rp] of Object.entries(remotes)) {
+    if(rp.room!==P.room) continue;
+    if(Math.abs(rp.x-x)<30 && Math.abs(rp.y-y)<48) return;
+  }
+  moveTarget.x = x;
+  moveTarget.y = y;
+  moveTarget.active = true;
+}
+document.addEventListener('touchend', ev => {
+  if(document.getElementById('game').classList.contains('active') && !touchMoved) {
+    const t = ev.changedTouches[0];
+    const canvas = document.getElementById('worldCanvas');
+    if(!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = t.clientX - rect.left, y = t.clientY - rect.top;
+    if(x>0 && y>0 && x<canvas.width && y<canvas.height) {
+      handleWorldTap(x, y);
+    }
+  }
+}, { passive:true });
+
+function drawRipples(ctx) {
+  ripples.forEach(r => {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, r.alpha);
+    ctx.strokeStyle = '#6c63ff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = Math.max(0, r.alpha * 0.3);
+    ctx.fillStyle = '#6c63ff';
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r * 0.4, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+}
+
+function showPlayerModal(pid,rp){
+  const box=document.getElementById('modalBox');
+  box.innerHTML=`
+    <div class="modal-title">👤 ${esc(rp.name||'?')}</div>
+    <div style="display:flex;align-items:center;gap:1rem;background:var(--card2);border-radius:12px;padding:.75rem;margin-bottom:.85rem;">
+      <canvas id="_mav" width="50" height="65"></canvas>
+      <div>
+        <div style="font-weight:700;">${esc(rp.name||'?')}</div>
+        <div style="font-size:.75rem;color:var(--success);margin-top:.15rem;">● Online · ${ROOMS[rp.room||'plaza']?.name||'World'}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.18rem;">${OUTFITS[rp.outfit||0]} style</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary btn-sm" onclick="dmPlayer('${esc(rp.name||'')}');closeModal()">💬 Message</button>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>{ const c=document.getElementById('_mav'); if(c){ const ctx=c.getContext('2d'); drawAvatar(ctx,rp,25,50,.65); }},40);
+}
+
+function dmPlayer(name){
+  document.getElementById('chatInput').value=`@${name} `;
+  document.getElementById('chatInput').focus();
+}
+
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+document.addEventListener('DOMContentLoaded',()=>{
+  const m=document.getElementById('modal');
+  if(m) m.addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  ROOM NAV
+// ═══════════════════════════════════════════════════════════════
+function navRoom(btn,roomId){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  gotoRoom(roomId);
+}
+
+function gotoRoom(roomId){
+  if(!ROOMS[roomId]) return;
+  P.room=roomId;
+  if(!P.roomsVisited) P.roomsVisited=[];
+  if(!P.roomsVisited.includes(roomId)) P.roomsVisited.push(roomId);
+  const room=ROOMS[roomId];
+  document.getElementById('roomLabel').textContent=`${room.emoji} ${room.name}`;
+  const c=document.getElementById('worldCanvas');
+  P.x=c.width/2+(Math.random()-.5)*70; P.y=c.height/2+(Math.random()-.5)*50;
+  broadcast({type:'room',room:roomId});
+  sysMsg(`📍 You entered ${room.emoji} ${room.name}`);
+  toast(`${room.emoji} ${room.name}`);
+  closeAllPanels();
+  saveProfile();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PANELS
+// ═══════════════════════════════════════════════════════════════
+function togglePanel(id){
+  const p=document.getElementById(id);
+  const was=p.classList.contains('open');
+  closeAllPanels();
+  if(!was){ p.classList.add('open'); refreshPanel(id); }
+}
+function closePanel(id){ document.getElementById(id).classList.remove('open'); }
+function closeAllPanels(){ document.querySelectorAll('.panel').forEach(p=>p.classList.remove('open')); }
+
+function refreshPanel(id){
+  if(id==='playersPanel') fillPlayersPanel();
+  if(id==='profilePanel') fillProfilePanel();
+  if(id==='shopPanel')    fillShopPanel();
+  if(id==='settingsPanel') fillSettingsPanel();
+}
+
+function fillPlayersPanel(){
+  const body=document.getElementById('playersPanelBody');
+  if(!body) return;
+  const total=Object.keys(remotes).length+1;
+  body.innerHTML=`<div style="font-size:.76rem;color:var(--muted);margin-bottom:.5rem;">${total} player${total!==1?'s':''} worldwide</div>`;
+
+  // Me
+  const meDiv=document.createElement('div'); meDiv.className='player-card';
+  meDiv.innerHTML=`<canvas id="_pcme" width="46" height="56" style="border-radius:50%;border:2px solid var(--primary);flex-shrink:0;"></canvas>
+    <div class="pc-info"><div class="pc-name">${esc(P.name)} <span style="font-size:.68rem;color:var(--muted)">(You)</span></div>
+    <div class="pc-sub"><span class="s-online"></span>${ROOMS[P.room]?.name||'World'}</div></div>`;
+  body.appendChild(meDiv);
+
+  Object.entries(remotes).forEach(([pid,rp])=>{
+    const id='_pc'+pid.replace(/[^a-z0-9]/gi,'');
+    const div=document.createElement('div'); div.className='player-card';
+    div.innerHTML=`<canvas id="${id}" width="46" height="56" style="border-radius:50%;border:2px solid #ff6584;flex-shrink:0;"></canvas>
+      <div class="pc-info"><div class="pc-name">${esc(rp.name||'?')}</div>
+      <div class="pc-sub"><span class="s-online"></span>${ROOMS[rp.room||'plaza']?.name||'World'}</div></div>
+      <button class="btn btn-primary btn-sm" onclick="dmPlayer('${esc(rp.name||'')}');closePanel('playersPanel')">💬</button>`;
+    body.appendChild(div);
+  });
+
+  setTimeout(()=>{
+    const cm=document.getElementById('_pcme');
+    if(cm){ const ctx=cm.getContext('2d'); drawAvatar(ctx,P,23,43,.53); }
+    Object.entries(remotes).forEach(([pid,rp])=>{
+      const c=document.getElementById('_pc'+pid.replace(/[^a-z0-9]/gi,''));
+      if(c){ const ctx=c.getContext('2d'); drawAvatar(ctx,rp,23,43,.53); }
+    });
+  },40);
+}
+
+function setShopTab(tab,el){
+  shopTab=tab;
+  el.closest('.panel-tabs').querySelectorAll('.panel-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  fillShopPanel();
+}
+
+function fillShopPanel(){
+  const body=document.getElementById('shopBody'); if(!body) return;
+  const items=SHOP_DATA[shopTab]||[];
+  body.innerHTML=`<div style="font-size:.76rem;color:var(--muted);margin-bottom:.6rem;">Balance: <span style="color:var(--gold);font-weight:700;">${P.coins} 🪙</span></div><div class="shop-grid"></div>`;
+  const grid=body.querySelector('.shop-grid');
+  items.forEach((item,i)=>{
+    const owned=(P.owned[shopTab]||[]).includes(i);
+    const d=document.createElement('div'); d.className='shop-item'+(owned?' owned':'');
+    d.innerHTML=`<div class="s-emoji">${item.e}</div><div class="s-name">${item.n}</div>
+      <div>${owned?'<span style="color:var(--success);font-size:.7rem;">✅ Owned</span>':`<span class="s-price">🪙${item.p}</span>`}</div>`;
+    if(!owned) d.onclick=()=>buyItem(shopTab,i,item);
+    grid.appendChild(d);
+  });
+}
+
+function buyItem(tab,idx,item){
+  if(P.coins<item.p){ toast('❌ Not enough coins!','bad'); return; }
+  P.coins-=item.p; document.getElementById('coinAmt').textContent=P.coins;
+  if(!P.owned[tab]) P.owned[tab]=[];
+  P.owned[tab].push(idx);
+  toast(`🎉 ${item.n} purchased!`,'gold');
+  fillShopPanel(); saveProfile();
+  if(tab==='pets'){ P.pet=idx; toast(`🐾 ${item.e} is now following you!`); }
+}
+
+function fillProfilePanel(){
+  const body=document.getElementById('profileBody'); if(!body) return;
+  const roomCount=(P.roomsVisited||[]).length;
+  body.innerHTML=`
+    <div style="text-align:center;padding:.5rem 0 .75rem;">
+      <canvas id="_profAv" width="90" height="110" style="border-radius:50%;border:3px solid var(--primary);"></canvas>
+      <div style="font-size:1.3rem;font-weight:800;margin-top:.3rem;">${esc(P.name)}</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">Level ${P.level} · ${P.coins} 🪙</div>
+      <div style="display:flex;gap:1rem;justify-content:center;margin-top:.7rem;">
+        <div style="text-align:center;"><div style="font-size:1.15rem;font-weight:700;color:var(--accent);">${Object.keys(remotes).length}</div><div style="font-size:.68rem;color:var(--muted);">Online Now</div></div>
+        <div style="text-align:center;"><div style="font-size:1.15rem;font-weight:700;color:var(--accent);">${roomCount}</div><div style="font-size:.68rem;color:var(--muted);">Rooms Visited</div></div>
+        <div style="text-align:center;"><div style="font-size:1.15rem;font-weight:700;color:var(--accent);">${P.msgCount||0}</div><div style="font-size:.68rem;color:var(--muted);">Messages</div></div>
+      </div>
+    </div>
+    <div style="font-size:.85rem;font-weight:700;margin-bottom:.4rem;">🏆 Achievements</div>
+    ${[
+      {name:'First Steps',desc:'Joined the world',icon:'👣',p:1,max:1},
+      {name:'Explorer',desc:'Visit all rooms',icon:'🗺️',p:roomCount,max:6},
+      {name:'Chatterbox',desc:'Send 20 messages',icon:'💬',p:Math.min(P.msgCount||0,20),max:20},
+      {name:'Social Butterfly',desc:'Meet 5 players',icon:'🦋',p:Math.min(Object.keys(remotes).length,5),max:5},
+    ].map(a=>{
+      const pct=Math.min(a.p/a.max*100,100);
+      return `<div class="ach-item"><div class="ach-icon">${a.icon}</div>
+        <div><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div>
+        <div class="ach-bar-wrap"><div class="ach-bar" style="width:${pct}%"></div></div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:.2rem;">${a.p}/${a.max}</div></div></div>`;
+    }).join('')}
+    <button class="btn btn-secondary" style="width:100%;margin-top:.25rem;" onclick="showScreen('creator')">✏️ Edit Avatar</button>
+  `;
+  setTimeout(()=>{ const c=document.getElementById('_profAv'); if(c){ const ctx=c.getContext('2d'); drawAvatar(ctx,P,45,82,1.05); }},40);
+}
+
+function fillSettingsPanel(){
+  const body=document.getElementById('settingsBody'); if(!body) return;
+  body.innerHTML=`
+    <div style="font-size:.82rem;font-weight:700;margin-bottom:.5rem;">Account</div>
+    <div style="background:var(--card2);border-radius:12px;padding:.75rem;margin-bottom:.5rem;">
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:.3rem;">Logged in as</div>
+      <div style="font-weight:700;">${esc(P.name)}</div>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;margin-bottom:.5rem;" onclick="showScreen('creator');closePanel('settingsPanel')">✏️ Edit Avatar</button>
+    <button class="btn btn-danger btn-sm" style="width:100%;margin-top:.5rem;" onclick="clearProfile()">🗑️ Reset Profile</button>
+    <div style="margin-top:1.25rem;font-size:.82rem;font-weight:700;margin-bottom:.5rem;">About</div>
+    <div style="background:var(--card2);border-radius:12px;padding:.75rem;font-size:.78rem;color:var(--muted);">
+      🌍 SocialWorld — P2P Multiplayer<br>
+      Everyone auto-joins the same world.<br>
+      Your profile is saved automatically.
+    </div>
+  `;
+}
+
+function clearProfile(){
+  if(!confirm('Reset your profile? This cannot be undone.')) return;
+  localStorage.removeItem(PROFILE_KEY);
+  location.reload();
+}
+
+// Touch-to-move handled inline in canvasClick / canvasTouchStart / canvasTouchMove
+
+// ═══════════════════════════════════════════════════════════════
+//  TOAST + HELPERS
+// ═══════════════════════════════════════════════════════════════
+function toast(msg,type=''){
+  const area=document.getElementById('toastArea'); if(!area) return;
+  const d=document.createElement('div');
+  d.className='toast'+(type?' '+type:'');
+  d.textContent=msg;
+  area.appendChild(d);
+  setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); },3200);
+}
+
+function updateOnlineCount(){
+  const n=Object.keys(remotes).length+1;
+  const el=document.getElementById('onlineNum');
+  if(el) el.textContent=n;
+}
+
+function setConnStep(n,state='active'){
+  for(let i=1;i<=3;i++){
+    const el=document.getElementById('cs'+i);
+    if(!el) continue;
+    if(i<n) el.className='conn-step done';
+    else if(i===n) el.className='conn-step '+state;
+    else el.className='conn-step';
+  }
+  const labels=['Starting network...','Finding the world...','Entering the world...'];
+  const el=document.getElementById('cs'+n);
+  if(el) el.textContent=(state==='done'?'✅ ':'⏳ ')+labels[n-1];
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AVATAR CREATOR SETUP
+// ═══════════════════════════════════════════════════════════════
+function setupCreator(){
+  function mkColors(rowId,arr,key){
+    const el=document.getElementById(rowId);
+    arr.forEach((c,i)=>{
+      const s=document.createElement('div'); s.className='color-swatch'+(P[key]===c?' active':'');
+      s.style.background=c;
+      s.onclick=()=>{ P[key]=c; el.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active')); s.classList.add('active'); drawCreatorPreview(); };
+      el.appendChild(s);
+    });
+  }
+  function mkChips(rowId,arr,key){
+    const el=document.getElementById(rowId);
+    arr.forEach((n,i)=>{
+      const s=document.createElement('div'); s.className='style-chip'+(P[key]===i?' active':'');
+      s.textContent=n;
+      s.onclick=()=>{ P[key]=i; el.querySelectorAll('.style-chip').forEach(x=>x.classList.remove('active')); s.classList.add('active'); drawCreatorPreview(); };
+      el.appendChild(s);
+    });
+  }
+  mkColors('skinRow',SKINS,'skin');
+  mkColors('hairColorRow',HAIR_COLORS,'hair');
+  mkColors('outfitColorRow',OUTFIT_COLORS,'outfitColor');
+  mkChips ('hairStyleRow',HAIR_STYLES,'hairStyle');
+  mkChips ('outfitRow',OUTFITS,'outfit');
+
+  // Pre-fill name
+  const ni=document.getElementById('nameInput');
+  if(ni) ni.value=P.name;
+  drawCreatorPreview();
+}
+
+function drawCreatorPreview(){
+  const c=document.getElementById('avatarPreview'); if(!c) return;
+  const ctx=c.getContext('2d'); ctx.clearRect(0,0,130,170);
+  drawAvatar(ctx,P,65,108,1.35);
+}
+
+function randomAvatar(){
+  P.skin        = SKINS[Math.floor(Math.random()*SKINS.length)];
+  P.hair        = HAIR_COLORS[Math.floor(Math.random()*HAIR_COLORS.length)];
+  P.hairStyle   = Math.floor(Math.random()*HAIR_STYLES.length);
+  P.outfit      = Math.floor(Math.random()*OUTFITS.length);
+  P.outfitColor = OUTFIT_COLORS[Math.floor(Math.random()*OUTFIT_COLORS.length)];
+  // Re-mark actives
+  document.querySelectorAll('#skinRow .color-swatch').forEach((s,i)=>s.classList.toggle('active',SKINS[i]===P.skin));
+  document.querySelectorAll('#hairColorRow .color-swatch').forEach((s,i)=>s.classList.toggle('active',HAIR_COLORS[i]===P.hair));
+  document.querySelectorAll('#outfitColorRow .color-swatch').forEach((s,i)=>s.classList.toggle('active',OUTFIT_COLORS[i]===P.outfitColor));
+  document.querySelectorAll('#hairStyleRow .style-chip').forEach((s,i)=>s.classList.toggle('active',i===P.hairStyle));
+  document.querySelectorAll('#outfitRow .style-chip').forEach((s,i)=>s.classList.toggle('active',i===P.outfit));
+  drawCreatorPreview();
+}
+
+function saveAndJoin(){
+  const ni=document.getElementById('nameInput');
+  if(ni?.value.trim()) P.name=ni.value.trim();
+  if(!P.name||P.name==='Player'){
+    alert('Please enter your name!'); return;
+  }
+  beginJoinWorld();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WELCOME BACK SCREEN
+// ═══════════════════════════════════════════════════════════════
+function showWelcomeBack(){
+  document.getElementById('welcomeName').textContent=P.name;
+  showScreen('welcome');
+  setTimeout(()=>{
+    const c=document.getElementById('welcomeAv'); if(!c) return;
+    const ctx=c.getContext('2d'); ctx.clearRect(0,0,120,150);
+    drawAvatar(ctx,P,60,95,1.2);
+  },80);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='creator') { setupCreator(); drawCreatorPreview(); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════════
+(function boot(){
+  // Stars
+  const sc=document.getElementById('stars');
+  for(let i=0;i<90;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=Math.random()*2.5+.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*4}s;animation-duration:${2+Math.random()*3}s`;
+    sc.appendChild(s);
+  }
+
+  // Loading bar
+  const bar=document.getElementById('loadBar');
+  const txt=document.getElementById('loadTxt');
+  const steps=['Initializing...','Checking profile...','Loading world...','Ready!'];
+  let step=0;
+  const iv=setInterval(()=>{
+    step++;
+    if(bar) bar.style.width=(step/steps.length*100)+'%';
+    if(txt) txt.textContent=steps[Math.min(step,steps.length-1)];
+    if(step>=steps.length){
+      clearInterval(iv);
+      setTimeout(()=>{
+        const hasProfile=loadProfile(); // Load from localStorage
+        if(hasProfile){
+          showWelcomeBack();
+        } else {
+          showScreen('creator');
+        }
+      },300);
+    }
+  },400);
+
+  // Warn on close
+  window.addEventListener('beforeunload',()=>{ try{broadcast({type:'bye'});}catch(e){} saveProfile(); });
+})();
+</script>
+</body>
+</html>
